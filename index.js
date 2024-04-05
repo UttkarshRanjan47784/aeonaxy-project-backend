@@ -87,8 +87,6 @@ const verifyNewEmail = (req, res, next) => {
     }
 }
 
-
-
 const storage = multer.diskStorage({
     destination : function(req, file, cb){
         return cb(null, "assets/images")
@@ -100,24 +98,24 @@ const storage = multer.diskStorage({
 
 const upload = multer({storage})
 
-app.get(`/dump`, async (req, res) => {
+// app.get(`/dump`, async (req, res) => {
     
-    const db = new pg.Client(ConString);
-    try {
-        await db.connect();
-        await db.query(`delete from userinfo`);
-        res.json({
-            stat: true,
-            msg: 'OK'
-        })
-    } catch (error) {
-        res.json({
-            stat:false,
-            msg: error.message
-        })
-    }
-    db.end()
-})
+//     const db = new pg.Client(ConString);
+//     try {
+//         await db.connect();
+//         await db.query(`delete from userinfo`);
+//         res.json({
+//             stat: true,
+//             msg: 'OK'
+//         })
+//     } catch (error) {
+//         res.json({
+//             stat:false,
+//             msg: error.message
+//         })
+//     }
+//     db.end()
+// })
 
 app.post(`/registeruser`, verifyReqInfo,  async (req, res) => {
     const db = new pg.Client(ConString)
@@ -144,14 +142,14 @@ app.post(`/sendverification`, verifyAllInfo, async (req, res) => {
         await db.connect();
         let response = await db.query(`update userinfo set profileURL=$1, location=$2, reason1=$3, reason2=$4, reason3=$5, verified=$6  where username=$7`, [allInfo.profileURL, allInfo.location, allInfo.reason1, allInfo.reason2, allInfo.reason3, allInfo.verified, allInfo.username]);
         console.log(allInfo.email);
-        
+        let htmlResponse = `<p><strong>${allInfo.username}</strong>Thank you for signing up on <strong>Dribbble</strong>!</p>`
         const resend = new Resend(process.env.RESENDAPI);
         try{
             const response2 = await resend.emails.send({
                 from: 'Fake Dribbble Admin <noreply@uttkarshranjan.tech>',
                 to: allInfo.email,
                 subject: 'Dribbble Fake Verification Email',
-                html: '<p>Congrats on sending your <strong>first email</strong>!</p>'
+                html: htmlResponse
             });
         }catch(error){
             console.log(error.message);
@@ -182,11 +180,13 @@ app.post(`/emailchange`, verifyNewEmail, async (req, res) => {
         await db.connect();
         let response = await db.query(`update userinfo set email=$1, verified=$2 where username=$3`, [info.newEmail, info.verified, info.username]);
         
+        let htmlResponse = `<p><strong>${info.username}</strong>Thank you for signing up on <strong>Dribbble</strong>!</p>`
+
         const response2 = await resend.emails.send({
             from: 'Fake Dribbble Admin <noreply@uttkarshranjan.tech>',
             to: info.newEmail,
             subject: 'Hello World',
-            html: '<p>Congrats on sending your <strong>first email</strong>!</p>'
+            html: htmlResponse
         });
         
         res.json({
