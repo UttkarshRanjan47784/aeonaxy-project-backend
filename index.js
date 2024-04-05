@@ -140,7 +140,7 @@ app.post(`/sendverification`, verifyAllInfo, async (req, res) => {
         await db.connect();
         let response = await db.query(`update userinfo set profileURL=$1, location=$2, reason1=$3, reason2=$4, reason3=$5, verified=$6  where username=$7`, [allInfo.profileURL, allInfo.location, allInfo.reason1, allInfo.reason2, allInfo.reason3, allInfo.verified, allInfo.username]);
         console.log(allInfo.email);
-        let htmlResponse = `<p><strong>${allInfo.username}</strong>Thank you for signing up on <strong>Dribbble</strong>!</p>`
+        let htmlResponse = `<p><strong>${allInfo.username}!</strong> Thank you for signing up on <strong>Dribbble</strong>!</p> made by Uttkarsh Ranjan <a href='https://github.com/UttkarshRanjan47784'>Github</a> <a href='https://www.linkedin.com/in/uttkarsh-ranjan-576048300/'>LinkedIn</a>`
         const resend = new Resend(process.env.RESENDAPI);
         try{
             const response2 = await resend.emails.send({
@@ -178,7 +178,7 @@ app.post(`/emailchange`, verifyNewEmail, async (req, res) => {
         await db.connect();
         let response = await db.query(`update userinfo set email=$1, verified=$2 where username=$3`, [info.newEmail, info.verified, info.username]);
         
-        let htmlResponse = `<p><strong>${info.username}</strong>Thank you for signing up on <strong>Dribbble</strong>!</p>`
+        let htmlResponse = `<p><strong>${info.username}!</strong> Thank you for signing up on <strong>Dribbble</strong>!</p> made by Uttkarsh Ranjan <a href='https://github.com/UttkarshRanjan47784'>Github</a> <a href='https://www.linkedin.com/in/uttkarsh-ranjan-576048300/'>LinkedIn</a>`
 
         const response2 = await resend.emails.send({
             from: 'Fake Dribbble Admin <noreply@uttkarshranjan.tech>',
