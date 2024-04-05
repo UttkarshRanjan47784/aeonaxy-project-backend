@@ -177,6 +177,7 @@ app.post(`/emailchange`, verifyNewEmail, async (req, res) => {
     let info = req.body;
     const db = new pg.Client(ConString);
     
+    const resend = new Resend(process.env.RESENDAPI);
     try {
         await db.connect();
         let response = await db.query(`update userinfo set email=$1, verified=$2 where username=$3`, [info.newEmail, info.verified, info.username]);
