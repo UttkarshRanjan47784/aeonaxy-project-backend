@@ -5,6 +5,9 @@ import z from 'zod'
 import pg from "pg";
 import axios from "axios";
 import nodemailer from 'nodemailer'
+import multer from 'multer'
+import {v2 as cloudinary} from 'cloudinary'
+import { Resend } from "resend";
 
 
 env.config();
@@ -15,6 +18,12 @@ const ConString = process.env.NEONSTRING
 const app = express();
 app.use(cors());
 app.use(express.json());
+
+cloudinary.config({ 
+    cloud_name: process.env.CLOUDINAME, 
+    api_key: process.env.CLOUDIAPI, 
+    api_secret: process.env.CLOUDISECRET 
+  });
 
 const userReqInfoSchema = z.object({
     name : z.string().trim(),
@@ -41,11 +50,6 @@ const newEmailSchema = z.object({
     newEmail : z.string().email(),
     verified : z.boolean()
 })
-
-
-function sendVerEmail () {
-    
-}
 
 const verifyReqInfo = (req, res, next) => {
     try{
@@ -82,6 +86,19 @@ const verifyNewEmail = (req, res, next) => {
         })
     }
 }
+
+
+
+const storage = multer.diskStorage({
+    destination : function(req, file, cb){
+        return cb(null, "assets/images")
+    },
+    filename : function (req, file, cb){
+        return cb(null, `${Date.now()}_${file.originalname}`)
+    }
+})
+
+const upload = multer({storage})
 
 app.get(`/dump`, async (req, res) => {
     
@@ -126,75 +143,80 @@ app.post(`/sendverification`, verifyAllInfo, async (req, res) => {
     try {
         await db.connect();
         let response = await db.query(`update userinfo set profileURL=$1, location=$2, reason1=$3, reason2=$4, reason3=$5, verified=$6  where username=$7`, [allInfo.profileURL, allInfo.location, allInfo.reason1, allInfo.reason2, allInfo.reason3, allInfo.verified, allInfo.username]);
-        const transporter = nodemailer.createTransport({
-            service: 'gmail',
-            host: "smtp.gmail.com",
-            port: 587,
-            secure: false,
-            auth: {
-                user: process.env.GADDR,
-                pass: process.env.GSTRING,
-            }
-        });
-    
-        const mailOptions = {
-            from: {
-                name : `Fake Dribbble Admin`,
-                address : process.env.GADDR
-            }, // sender address
-            to: allInfo.email, // list of receivers
-            subject: "Fake Dribbble account verification mail", // Subject line
-            text: "Hello world?", // plain text body
-            html: "<b>Hello world ?< /b>", // html body
-        }
-        await transporter.sendMail(mailOptions);
+        console.log(allInfo.email);
         
+        const resend = new Resend(process.env.RESENDAPI);
+        try{
+            const response2 = await resend.emails.send({
+                from: 'onboarding@resend.dev',
+                to: allInfo.email,
+                subject: 'Dribbble Fake Verification Email',
+                html: '<p>Congrats on sending your <strong>first email</strong>!</p>'
+            });
+        }catch(error){
+            console.log(error.message);
+            throw new Error(error.message)
+        }
+
+        console.log(`XXXXX`)
         res.json({
             stat: true,
             msg: `OK`
         })
-    
-    //     const sendMail = async (transporter, mailOptions) => {
-    //         try {
-    //         await transporter.sendMail(mailOptions); I
-    //         console.log('Email has been sent!')
-    //         } catch (error) {
-    //             console.error(error);
-    //         }
-    //     }
-    //     sendMail(transporter,mailOptions);
-    // } catch (error) {
-        // res.json({
-        //     stat : false,
-        //     msg : error.message
-        // })
     } catch(error){
         res.json({
             stat: false,
             msg: error.message
         })
     }
-    db.end()
+    db.end();
 })
 
 app.post(`/emailchange`, verifyNewEmail, async (req, res) => {
     console.log(req.body)
     let info = req.body;
     const db = new pg.Client(ConString);
+    
     try {
         await db.connect();
         let response = await db.query(`update userinfo set email=$1, verified=$2 where username=$3`, [info.newEmail, info.verified, info.username]);
-        res.json({
-            stat : true,
-            msg : `OK`
+        
+        const response2 = await resend.emails.send({
+            from: 'onboarding@resend.dev',
+            to: info.newEmail,
+            subject: 'Hello World',
+            html: '<p>Congrats on sending your <strong>first email</strong>!</p>'
         });
+        
+        res.json({
+            stat: true,
+            msg: `OK`
+        })
     } catch (error) {
         res.json({
             stat : false,
             msg : error.message
         })
     }
-    db.end()
+    db.end();
+})
+
+app.post(`/uploadprofilepic`, upload.single('file'), async (req, res) => {
+    try {
+        console.log(req.file)
+        console.log(`${req.file.path}`)
+        let response = await cloudinary.uploader.upload(req.file.path)
+        console.log(response)
+        res.json({
+            stat: true,
+            msg: `${response.url}`
+        })
+    } catch (error) {
+        res.json({
+            stat: false,
+            msg: `${error.message}`
+        })
+    }
 })
 
 app.listen(port, ()=>{
