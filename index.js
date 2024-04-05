@@ -3,8 +3,6 @@ import env from "dotenv"
 import cors from "cors"
 import z from 'zod'
 import pg from "pg";
-import axios from "axios";
-import nodemailer from 'nodemailer'
 import multer from 'multer'
 import {v2 as cloudinary} from 'cloudinary'
 import { Resend } from "resend";
