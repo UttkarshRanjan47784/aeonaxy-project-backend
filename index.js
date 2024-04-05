@@ -12,7 +12,7 @@ import { Resend } from "resend";
 
 env.config();
 
-const port = process.env.PORT;
+const port = process.env.PORT || 5000;
 const ConString = process.env.NEONSTRING
 
 const app = express();
