@@ -148,7 +148,7 @@ app.post(`/sendverification`, verifyAllInfo, async (req, res) => {
         const resend = new Resend(process.env.RESENDAPI);
         try{
             const response2 = await resend.emails.send({
-                from: 'onboarding@resend.dev',
+                from: 'Fake Dribbble Admin <noreply@uttkarshranjan.tech>',
                 to: allInfo.email,
                 subject: 'Dribbble Fake Verification Email',
                 html: '<p>Congrats on sending your <strong>first email</strong>!</p>'
@@ -182,7 +182,7 @@ app.post(`/emailchange`, verifyNewEmail, async (req, res) => {
         let response = await db.query(`update userinfo set email=$1, verified=$2 where username=$3`, [info.newEmail, info.verified, info.username]);
         
         const response2 = await resend.emails.send({
-            from: 'onboarding@resend.dev',
+            from: 'Fake Dribbble Admin <noreply@uttkarshranjan.tech>',
             to: info.newEmail,
             subject: 'Hello World',
             html: '<p>Congrats on sending your <strong>first email</strong>!</p>'
